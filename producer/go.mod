@@ -1,4 +1,4 @@
-module kafka
+module github.com/sawoklybimecpubliki/kafka
 
 go 1.23
 
