@@ -56,7 +56,35 @@ func (s *Service) Produce(event *Event) error {
 	return nil
 }
 
-func (s *Service) Consume(ctx context.Context) []string {
+func (s *Service) ConsumeOne(ctx context.Context) string {
+	r := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:  []string{brokerAddr},
+		Topic:    topicName,
+		MinBytes: 10e3,
+		MaxBytes: 10e6,
+		MaxWait:  1 * time.Second,
+	})
+
+	var out string
+
+	msg, err := r.ReadMessage(ctx)
+	if err != nil {
+		log.Printf("Error reading message: %v", err)
+		return ""
+	}
+
+	log.Printf("Message received from topic %s, partition %d, offset %d: %s\n",
+		msg.Topic, msg.Partition, msg.Offset, string(msg.Value))
+
+	if err := r.Close(); err != nil {
+		log.Println("failed to close reader:", err)
+		return err.Error()
+	}
+
+	return out
+}
+
+func (s *Service) ConsumeAll(ctx context.Context) []string {
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  []string{brokerAddr},
 		Topic:    topicName,
