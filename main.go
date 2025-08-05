@@ -22,8 +22,6 @@ type ServiceNotify struct {
 const topicName = "event"
 const brokerAddr = "kafka:9092" // ВРОДЕ неправильный
 
-//var KafkaConn *kafka.Conn
-
 func NewConnection(brokerAddr string) *kafka.Conn {
 	var kafkaConn *kafka.Conn
 	var err error
