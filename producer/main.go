@@ -1,57 +1,115 @@
-package kafka
+package events
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/segmentio/kafka-go"
 	"log"
+	"net/http"
 	"time"
 )
 
-type Service struct {
-	c *kafka.Conn
+type Event struct {
+	URL string `json:"url"`
 }
 
-func NewConnect(ctx context.Context, topic string, partition int) *kafka.Conn {
-	conn, err := kafka.DialLeader(ctx, "tcp", "localhost:29092", topic, partition)
-	if err != nil {
-		log.Println("failed to dial leader:", err)
-	}
-	return conn
+type ServiceNotify struct {
+	BrokerAddr string
+	KafkaConn  *kafka.Conn
 }
 
-func (s *Service) WriteMessage(mess string) error {
-	s.c.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	_, err := s.c.WriteMessages(
-		kafka.Message{Value: []byte(mess)},
-	)
-	if err != nil {
-		log.Println("failed to write messages: ", err)
-		return err
-	}
-	return nil
-}
+const topicName = "event"
+const brokerAddr = "kafka:9092" // ВРОДЕ неправильный
 
-func ReadMessage() error {
-	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{"localhost:29092"},
-		Topic:   "my-topic",
-		GroupID: "my-groupID",
-	})
+//var KafkaConn *kafka.Conn
 
-	defer r.Close()
-
-	for range 7 {
-		m, err := r.ReadMessage(context.Background())
-		if err != nil {
+func NewConnection(brokerAddr string) *kafka.Conn {
+	var kafkaConn *kafka.Conn
+	var err error
+	for range 5 {
+		kafkaConn, err = kafka.DialLeader(context.Background(), "tcp", brokerAddr, topicName, 0)
+		if err == nil {
 			break
 		}
-		fmt.Printf("message at offset %d: %s = %s\n", m.Offset, string(m.Key), string(m.Value))
+		log.Println("не удалось подключиться к Kafka (%s): %w", brokerAddr, err)
+		time.Sleep(3 * time.Second)
+	}
+	log.Println("KAFKA---------------| ", kafkaConn)
+	return kafkaConn
+}
+
+/*func init() {
+	var once sync.Once
+	log.Println("INIT: ---------------------------------------")
+	once.Do(func() {
+		var err error
+		for range 5 {
+			KafkaConn, err = kafka.DialLeader(context.Background(), "tcp", brokerAddr, topicName, 0)
+			if err == nil {
+				break
+			}
+			log.Println("не удалось подключиться к Kafka (%s): %w", brokerAddr, err)
+			time.Sleep(3 * time.Second)
+		}
+	})
+	log.Println("KAFKA---------------| ", KafkaConn)
+}*/
+
+func (s *ServiceNotify) ProduceEvent(event *Event) error {
+	eventJSON, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("ошибка маршалинга JSON: %w", err)
 	}
 
-	if err := r.Close(); err != nil {
-		log.Fatal("failed to close reader:", err)
-		return err
+	msg := kafka.Message{
+		Value: eventJSON,
+		Time:  time.Now(),
+	}
+
+	_, err = s.KafkaConn.WriteMessages(msg)
+	if err != nil {
+		return fmt.Errorf("ошибка записи сообщения в Kafka: %w", err)
 	}
 	return nil
+}
+
+func (s *ServiceNotify) ReceiverEvent(ctx context.Context) []string {
+	r := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:  []string{brokerAddr},
+		Topic:    topicName,
+		MinBytes: 10e3,
+		MaxBytes: 10e6,
+		MaxWait:  1 * time.Second,
+	})
+
+	var out []string
+	for {
+		m, err := r.ReadMessage(ctx)
+		if err != nil {
+			log.Printf("Error reading message: %v", err)
+			break
+		}
+		out = append(out, string(m.Value))
+		fmt.Printf("Message received from topic %s, partition %d, offset %d: %s\n",
+			m.Topic, m.Partition, m.Offset, string(m.Value))
+
+		if err := r.Close(); err != nil {
+			log.Fatal("failed to close reader:", err)
+			break
+		}
+	}
+	return out
+}
+
+func (s *ServiceNotify) EventsMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := s.ProduceEvent(&Event{
+			URL: r.URL.Path,
+		}); err != nil {
+			log.Println("error send: ", err)
+		}
+
+		next.ServeHTTP(w, r)
+	}
 }
