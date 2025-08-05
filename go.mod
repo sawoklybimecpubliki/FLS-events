@@ -1,4 +1,4 @@
-module github.com/sawoklybimecpubliki/kafka
+module github.com/sawoklybimecpubliki/FLS-events
 
 go 1.23
 
