@@ -25,4 +25,4 @@ COPY --from=builder /FLS-event .
 
 EXPOSE 8080
 
-CMD ["./eventConsume"]
+CMD ["./eventConsumer"]
