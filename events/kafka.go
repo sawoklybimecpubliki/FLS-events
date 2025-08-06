@@ -65,11 +65,13 @@ func (s *Service) Produce(event *Event) error {
 
 func (s *Service) ConsumeOne(ctx context.Context) string {
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  []string{brokerAddr},
-		Topic:    topicName,
-		MinBytes: 10e3,
-		MaxBytes: 10e6,
-		MaxWait:  1 * time.Second,
+		Brokers:     []string{brokerAddr},
+		GroupID:     "Counter",
+		Topic:       topicName,
+		MinBytes:    10e3,
+		MaxBytes:    10e6,
+		MaxWait:     1 * time.Second,
+		StartOffset: kafka.LastOffset,
 	})
 
 	var out string
@@ -93,11 +95,13 @@ func (s *Service) ConsumeOne(ctx context.Context) string {
 
 func (s *Service) ConsumeAll(ctx context.Context) []string {
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  []string{brokerAddr},
-		Topic:    topicName,
-		MinBytes: 10e3,
-		MaxBytes: 10e6,
-		MaxWait:  1 * time.Second,
+		Brokers:     []string{brokerAddr},
+		GroupID:     "Counter",
+		Topic:       topicName,
+		MinBytes:    10e3,
+		MaxBytes:    10e6,
+		MaxWait:     1 * time.Second,
+		StartOffset: kafka.LastOffset,
 	})
 
 	var out []string
@@ -136,5 +140,6 @@ func ViewCount() []Respond {
 	for url, n := range Count {
 		out = append(out, Respond{URL: url, Count: n})
 	}
+	log.Println("out-------| ", out)
 	return out
 }
