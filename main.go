@@ -9,13 +9,6 @@ import (
 	"time"
 )
 
-var count map[string]int
-
-type Respond struct {
-	URL   string
-	Count int
-}
-
 func main() {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -23,7 +16,7 @@ func main() {
 		log.Println("exit error: ", err)
 	}
 	wg.Wait()
-	log.Println(ViewCount())
+	log.Println(events.ViewCount())
 }
 
 func run(ctx context.Context, wg *sync.WaitGroup) error {
@@ -31,7 +24,7 @@ func run(ctx context.Context, wg *sync.WaitGroup) error {
 		BrokerAddr: "kafka:9092",
 		KafkaConn:  events.NewConnection("kafka:9092"),
 	}
-	count = make(map[string]int)
+	events.Count = make(map[string]int)
 
 	go func() {
 		tick := time.NewTicker(5 * time.Second)
@@ -52,14 +45,6 @@ func run(ctx context.Context, wg *sync.WaitGroup) error {
 
 func CountingUsers(url []string) {
 	for _, u := range url {
-		count[u]++
+		events.Count[u]++
 	}
-}
-
-func ViewCount() []Respond {
-	var out []Respond
-	for url, n := range count {
-		out = append(out, Respond{URL: url, Count: n})
-	}
-	return out
 }

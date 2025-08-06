@@ -14,10 +14,17 @@ type Event struct {
 	URL string `json:"url"`
 }
 
+type Respond struct {
+	URL   string
+	Count int
+}
+
 type Service struct {
 	BrokerAddr string
 	KafkaConn  *kafka.Conn
 }
+
+var Count map[string]int
 
 const topicName = "event"
 const brokerAddr = "kafka:9092" // ВРОДЕ неправильный
@@ -122,4 +129,12 @@ func (s *Service) EventsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		next.ServeHTTP(w, r)
 	}
+}
+
+func ViewCount() []Respond {
+	var out []Respond
+	for url, n := range Count {
+		out = append(out, Respond{URL: url, Count: n})
+	}
+	return out
 }
