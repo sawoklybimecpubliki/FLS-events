@@ -27,7 +27,7 @@ type Service struct {
 var Count map[string]int
 
 const topicName = "event"
-const brokerAddr = "kafka:9092" // ВРОДЕ неправильный
+const brokerAddr = "kafka:9092"
 
 func NewConnection(brokerAddr string) *kafka.Conn {
 	var kafkaConn *kafka.Conn
@@ -42,6 +42,7 @@ func NewConnection(brokerAddr string) *kafka.Conn {
 		log.Println("Error connection to kafka: ", brokerAddr, err)
 		time.Sleep(3 * time.Second)
 	}
+	log.Println("Connections success")
 	return kafkaConn
 }
 
@@ -120,6 +121,7 @@ func (s *Service) ConsumeAll(ctx context.Context) []string {
 			log.Fatal("failed to close reader:", err)
 		}
 	}
+	log.Println("OUT ALL: ", out)
 	return out
 }
 

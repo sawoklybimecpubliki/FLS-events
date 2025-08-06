@@ -37,6 +37,7 @@ func run(ctx context.Context, wg *sync.WaitGroup) error {
 			case <-tick.C:
 				answer := app.ConsumeAll(context.Background())
 				CountingUsers(answer)
+				log.Println("TICK: ", answer)
 			}
 		}
 	}()
