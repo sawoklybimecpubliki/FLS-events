@@ -11,7 +11,7 @@ RUN go mod download
 COPY . .
 
 # Build the binary (change path if needed)
-RUN go build -o eventConsume .
+RUN go build -o eventConsumer .
 
 # Final stage
 FROM alpine:latest

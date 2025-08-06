@@ -6,6 +6,7 @@ import (
 	"github.com/sawoklybimecpubliki/FLS-events/events"
 	"log"
 	"sync"
+	"time"
 )
 
 func main() {
@@ -29,7 +30,7 @@ func run(ctx context.Context, wg *sync.WaitGroup) error {
 	msgCh := service.GetMsgChannel(kafkaConsumerCtx, wg)
 
 	go func() {
-
+		tick := time.NewTicker(3 * time.Second)
 		for {
 			select {
 			case <-ctx.Done():
@@ -40,6 +41,8 @@ func run(ctx context.Context, wg *sync.WaitGroup) error {
 			case msg := <-msgCh:
 				CountUsers(msg)
 				log.Println("TICK: ", msg)
+			case <-tick.C:
+				log.Println(events.Count)
 			}
 		}
 	}()
