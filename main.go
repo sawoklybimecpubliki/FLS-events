@@ -6,47 +6,46 @@ import (
 	"github.com/sawoklybimecpubliki/FLS-events/events"
 	"log"
 	"sync"
-	"time"
 )
 
 func main() {
 	wg := sync.WaitGroup{}
-	wg.Add(1)
+	wg.Add(2)
 	if err := run(context.Background(), &wg); err != nil {
 		log.Println("exit error: ", err)
 	}
 	wg.Wait()
-	log.Println(events.ViewCount())
+	log.Println(events.GetStats())
 }
 
 func run(ctx context.Context, wg *sync.WaitGroup) error {
-	app := events.Service{
+	service := events.Service{
 		BrokerAddr: "kafka:9092",
 		KafkaConn:  events.NewConnection("kafka:9092"),
 	}
+
 	events.Count = make(map[string]int)
+	kafkaConsumerCtx, kafkaCancelCtx := context.WithCancel(context.Background())
+	msgCh := service.GetMsgChannel(kafkaConsumerCtx, wg)
 
 	go func() {
-		tick := time.NewTicker(5 * time.Second)
+
 		for {
 			select {
 			case <-ctx.Done():
 				fmt.Println("Exit loop")
+				kafkaCancelCtx()
 				wg.Done()
 				return
-			case <-tick.C:
-				answer := app.ConsumeAll(context.Background())
-				CountingUsers(answer)
-				log.Println("TICK: ", answer)
+			case msg := <-msgCh:
+				CountUsers(msg)
+				log.Println("TICK: ", msg)
 			}
 		}
 	}()
 	return nil
 }
 
-func CountingUsers(url []string) {
-	for _, u := range url {
-		events.Count[u]++
-		log.Println(events.Count)
-	}
+func CountUsers(url events.Event) {
+	events.Count[url.URL]++
 }

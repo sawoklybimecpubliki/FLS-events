@@ -7,12 +7,17 @@ import (
 	"github.com/segmentio/kafka-go"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 )
 
 type Event struct {
-	URL   string `json:"url"`
-	Count int    `json:"count,omitempty"`
+	URL string `json:"url"`
+}
+
+type HandlerStats struct {
+	URL   string
+	Count int
 }
 
 type Service struct {
@@ -126,6 +131,33 @@ func (s *Service) ConsumeAll(ctx context.Context) []string {
 	return out
 }
 
+func (s *Service) GetMsgChannel(ctx context.Context, wg *sync.WaitGroup) <-chan Event {
+	msgCh := make(chan Event)
+	go func() {
+		r := kafka.NewReader(kafka.ReaderConfig{
+			Brokers:     []string{brokerAddr},
+			GroupID:     "Counter",
+			Topic:       topicName,
+			MinBytes:    10e3,
+			MaxBytes:    10e6,
+			MaxWait:     1 * time.Second,
+			StartOffset: kafka.LastOffset,
+		})
+		for {
+			msg, err := r.ReadMessage(ctx)
+			if err != nil {
+				log.Printf("Error reading message: %v", err)
+				break
+			}
+			msgCh <- Event{
+				URL: string(msg.Value),
+			}
+		}
+		wg.Done()
+	}()
+	return msgCh
+}
+
 func (s *Service) EventsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := s.Produce(&Event{
@@ -138,10 +170,10 @@ func (s *Service) EventsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func ViewCount() []Event {
-	var out []Event
+func GetStats() []HandlerStats {
+	var out []HandlerStats
 	for url, n := range Count {
-		out = append(out, Event{URL: url, Count: n})
+		out = append(out, HandlerStats{URL: url, Count: n})
 	}
 	log.Println("out-------| ", out)
 	return out
