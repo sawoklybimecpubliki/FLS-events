@@ -22,7 +22,7 @@ func main() {
 func run(ctx context.Context, wg *sync.WaitGroup) error {
 	app := events.Service{
 		BrokerAddr: "kafka:9092",
-		KafkaConn:  events.NewConnection("kafka:9092"),
+		KafkaConn:  nil,
 	}
 	events.Count = make(map[string]int)
 
