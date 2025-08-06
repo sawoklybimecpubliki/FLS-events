@@ -11,12 +11,8 @@ import (
 )
 
 type Event struct {
-	URL string `json:"url"`
-}
-
-type Respond struct {
-	URL   string
-	Count int
+	URL   string `json:"url"`
+	Count int    `json:"count,omitempty"`
 }
 
 type Service struct {
@@ -112,8 +108,13 @@ func (s *Service) ConsumeAll(ctx context.Context) []string {
 			log.Printf("Error reading message: %v", err)
 			break
 		}
+		var tmp Event
+		err = json.Unmarshal(m.Value, &tmp)
+		if err != nil {
+			log.Println("Error unmarshalling")
+		}
 
-		out = append(out, string(m.Value))
+		out = append(out, tmp.URL)
 		log.Printf("Message received from topic %s, partition %d, offset %d: %s\n",
 			m.Topic, m.Partition, m.Offset, string(m.Value))
 
@@ -137,10 +138,10 @@ func (s *Service) EventsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func ViewCount() []Respond {
-	var out []Respond
+func ViewCount() []Event {
+	var out []Event
 	for url, n := range Count {
-		out = append(out, Respond{URL: url, Count: n})
+		out = append(out, Event{URL: url, Count: n})
 	}
 	log.Println("out-------| ", out)
 	return out

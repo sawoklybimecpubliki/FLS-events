@@ -47,5 +47,6 @@ func run(ctx context.Context, wg *sync.WaitGroup) error {
 func CountingUsers(url []string) {
 	for _, u := range url {
 		events.Count[u]++
+		log.Println(events.Count)
 	}
 }
