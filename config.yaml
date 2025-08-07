@@ -1,0 +1,10 @@
+app:
+  connectionTimeoutSec: 10
+
+mongo:
+  host: localhost
+  port: 27017
+  username: mongoadmin
+  password: mongoadmin
+  dbName: filestorage
+  statsCollection: stats

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sawoklybimecpubliki/FLS-events/core"
 	"github.com/segmentio/kafka-go"
 	"log"
 	"net/http"
@@ -23,6 +24,7 @@ type HandlerStats struct {
 type Service struct {
 	BrokerAddr string
 	KafkaConn  *kafka.Conn
+	StatStore  *core.Store
 }
 
 var Count map[string]int
@@ -175,6 +177,5 @@ func GetStats() []HandlerStats {
 	for url, n := range Count {
 		out = append(out, HandlerStats{URL: url, Count: n})
 	}
-	log.Println("out-------| ", out)
 	return out
 }
