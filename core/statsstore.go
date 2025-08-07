@@ -46,7 +46,8 @@ func (db *Store) UpdateStat(ctx context.Context, s Stat) error {
 	log.Println("stat: ", s)
 	opts := options.Update().SetUpsert(true)
 	filter := bson.D{{"name", s.Name}}
-	_, err := db.c.UpdateOne(ctx, filter, bson.D{{"number", s.Number}}, opts)
+	update := bson.D{{"$set", bson.D{{"number", s.Number}}}}
+	_, err := db.c.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
 		log.Println("error insert", err)
 	}
