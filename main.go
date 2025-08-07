@@ -10,7 +10,6 @@ import (
 	"log"
 	"strings"
 	"sync"
-	"time"
 )
 
 func main() {
@@ -55,11 +54,9 @@ func run(ctx context.Context, wg *sync.WaitGroup) error {
 	msgCh := service.GetMsgChannel(kafkaConsumerCtx, wg)
 
 	go func() {
-		tick := time.NewTicker(3 * time.Second)
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Println("Exit loop")
 				kafkaCancelCtx()
 				wg.Done()
 				return
@@ -71,9 +68,6 @@ func run(ctx context.Context, wg *sync.WaitGroup) error {
 				}); err != nil {
 					log.Println("error insert", err)
 				}
-				log.Println("TICK: ", msg)
-			case <-tick.C:
-				log.Println(events.Count)
 			}
 		}
 	}()

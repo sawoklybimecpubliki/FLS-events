@@ -21,7 +21,6 @@ type Store struct {
 func NewStore(collection *mongo.Collection) (*Store, error) {
 	mod := mongo.IndexModel{
 		Keys: bson.M{"name": 1},
-		//Options: options.Index().SetUnique(true),
 	}
 
 	if _, err := collection.Indexes().CreateOne(context.TODO(), mod); err != nil {
@@ -46,7 +45,7 @@ func (db *Store) UpdateStat(ctx context.Context, s Stat) error {
 	log.Println("stat: ", s)
 	opts := options.Update().SetUpsert(true)
 	filter := bson.D{{"name", s.Name}}
-	update := bson.D{{"$set", bson.D{{"number", s.Number}}}}
+	update := bson.D{{"$inc", bson.D{{"number", 1}}}}
 	_, err := db.c.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
 		log.Println("error insert", err)

@@ -8,7 +8,6 @@ import (
 	"github.com/segmentio/kafka-go"
 	"log"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 )
@@ -157,9 +156,8 @@ func (s *Service) GetMsgChannel(ctx context.Context, wg *sync.WaitGroup) <-chan 
 			if err != nil {
 				log.Println("Error unmarshalling")
 			}
-			_, url, _ := strings.Cut(tmp.URL, "/")
 			msgCh <- Event{
-				URL: url,
+				URL: tmp.URL,
 			}
 		}
 		wg.Done()
