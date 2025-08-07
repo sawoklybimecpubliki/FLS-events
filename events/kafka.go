@@ -129,7 +129,6 @@ func (s *Service) ConsumeAll(ctx context.Context) []string {
 			log.Fatal("failed to close reader:", err)
 		}
 	}
-	log.Println("OUT ALL: ", out)
 	return out
 }
 

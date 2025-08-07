@@ -33,7 +33,6 @@ func NewStore(collection *mongo.Collection) (*Store, error) {
 }
 
 func (db *Store) InsertStat(ctx context.Context, s Stat) error {
-	log.Println("stat: ", s)
 	_, err := db.c.InsertOne(ctx, s)
 	if err != nil {
 		log.Println("error insert", err)
