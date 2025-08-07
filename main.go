@@ -65,6 +65,12 @@ func run(ctx context.Context, wg *sync.WaitGroup) error {
 				return
 			case msg := <-msgCh:
 				CountUsers(msg)
+				if err := service.StatStore.InsertStat(ctx, core.Stat{
+					Name:   msg.URL,
+					Number: events.Count[msg.URL],
+				}); err != nil {
+					log.Println("error insert", err)
+				}
 				log.Println("TICK: ", msg)
 			case <-tick.C:
 				log.Println(events.Count)
@@ -76,6 +82,7 @@ func run(ctx context.Context, wg *sync.WaitGroup) error {
 
 func CountUsers(url events.Event) {
 	events.Count[url.URL]++
+
 }
 
 type Config struct {
