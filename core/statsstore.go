@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 )
 
@@ -35,6 +36,17 @@ func NewStore(collection *mongo.Collection) (*Store, error) {
 func (db *Store) InsertStat(ctx context.Context, s Stat) error {
 	log.Println("stat: ", s)
 	_, err := db.c.InsertOne(ctx, s)
+	if err != nil {
+		log.Println("error insert", err)
+	}
+	return err
+}
+
+func (db *Store) UpdateStat(ctx context.Context, s Stat) error {
+	log.Println("stat: ", s)
+	opts := options.Update().SetUpsert(true)
+	filter := bson.D{{"name", s.Name}}
+	_, err := db.c.UpdateOne(ctx, filter, bson.D{{"number", s.Number}}, opts)
 	if err != nil {
 		log.Println("error insert", err)
 	}

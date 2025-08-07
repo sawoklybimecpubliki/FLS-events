@@ -151,8 +151,14 @@ func (s *Service) GetMsgChannel(ctx context.Context, wg *sync.WaitGroup) <-chan 
 				log.Printf("Error reading message: %v", err)
 				break
 			}
+			var tmp Event
+			err = json.Unmarshal(msg.Value, &tmp)
+			if err != nil {
+				log.Println("Error unmarshalling")
+			}
+
 			msgCh <- Event{
-				URL: string(msg.Value),
+				URL: tmp.URL,
 			}
 		}
 		wg.Done()

@@ -65,7 +65,7 @@ func run(ctx context.Context, wg *sync.WaitGroup) error {
 				return
 			case msg := <-msgCh:
 				CountUsers(msg)
-				if err := service.StatStore.InsertStat(ctx, core.Stat{
+				if err := service.StatStore.UpdateStat(ctx, core.Stat{
 					Name:   msg.URL,
 					Number: events.Count[msg.URL],
 				}); err != nil {
